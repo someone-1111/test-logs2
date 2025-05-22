@@ -24,10 +24,13 @@ def obtener_logs():
         # Filtros opcionales
         autor = request.args.get("author")
         accion = request.args.get("action")
+        moderador = request.args.get("mod")
 
         filtro = {}
         if autor:
             filtro["target_author"] = {"$regex": autor, "$options": "i"}
+        if moderador:
+            filtro["mod"] = {"$regex": moderador, "$options": "i"}
         if accion:
             filtro["action"] = accion
 
