@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Logs Moderación Reddit (Paginado Backend)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 1.5rem;
+      background: #f9f9f9;
+    }
+    label, input, select, button {
+      margin-right: 1rem;
+      margin-bottom: 1rem;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin-top: 1rem;
+    }
+    th, td {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+    }
+    th {
+      background: #eee;
+    }
+    .pagination button {
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Logs Moderación r/chile (Paginado Backend)</h1>
+
+  <div>
+    <label for="autor">Afectado:</label>
+    <input type="text" id="autor" placeholder="Buscar por afectado..." />
+
+    <label for="moderador">Moderador:</label>
+    <input type="text" id="moderador" placeholder="Buscar por moderador">
+
+    <label for="accion">Acción:</label>
+    <select id="accion">
+      <option value="">Todas</option>
+      <option value="removelink">removelink</option>
+      <option value="removecomment">removecomment</option>
+      <option value="approvelink">approvelink</option>
+      <option value="approvecomment">approvecomment</option>
+      <option value="banuser">banuser</option>
+      <option value="unbanuser">unbanuser</option>
+      <option value="distinguish">distinguish</option>
+      <option value="sticky">sticky</option>
+      <option value="addremovalreason">addremovalreason</option>
+    </select>
+  </div>
+
+  <button onclick="cargarDatos()">Buscar</button>
+
+  <div>
+    <small>Total resultados: <span id="totalResultados">0</span></small>
+  </div>
+
+  <table id="tablaLogs">
+    <thead>
+      <tr>
+        <th>Acción</th>
+        <th>Autor</th>
+        <th>Moderador</th>
+        <th>Fecha</th>
+        <th>Enlace</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="pagination">
+    <button onclick="cambiarPagina(-1)">← Anterior</button>
+    <span id="paginaActual">Página 1</span>
+    <button onclick="cambiarPagina(1)">Siguiente →</button>
+  </div>
+
+<script>
+let pagina = 1;
+const porPagina = 25;
+let totalResultados = 0;
+let debounceTimer;
+
+const autorInput = document.getElementById("autor");
+const moderadorInput = document.getElementById("moderador");
+const accionSelect = document.getElementById("accion");
+
+// Al cambiar autor o acción, reinicia página a 1 y recarga
+autorInput.addEventListener("input", () => {
+  pagina = 1;
+  debounceCargarDatos();
+});
+
+moderadorInput.addEventListener("input", () => {
+  pagina = 1;
+  debounceCargarDatos();
+});
+
+accionSelect.addEventListener("change", () => {
+  pagina = 1;
+  cargarDatos();
+});
+
+// Función debounce para esperar 500 ms tras última pulsación
+function debounceCargarDatos() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    cargarDatos();
+  }, 500);
+}
+
+async function cargarDatos() {
+  const autor = autorInput.value.trim();
+  const moderador = moderadorInput.value.trim();
+  const accion = accionSelect.value;
+
+  const params = new URLSearchParams();
+  params.append("page", pagina);
+  params.append("limit", porPagina);
+  if (autor) params.append("author", autor);
+  if (moderador) params.append("mod", moderador);
+  if (accion) params.append("action", accion);
+
+  try {
+    const resp = await fetch(`https://test-logs2.onrender.com/api/logs?${params.toString()}`);
+    const data = await resp.json();
+
+    if (resp.ok) {
+      totalResultados = data.total;
+      document.getElementById("totalResultados").textContent = totalResultados;
+      document.getElementById("paginaActual").textContent = `Página ${data.page}`;
+
+      const tbody = document.querySelector("#tablaLogs tbody");
+      tbody.innerHTML = "";
+
+      data.results.forEach(item => {
+        const fila = document.createElement("tr");
+        fila.innerHTML = `
+          <td>${item.action}</td>
+          <td>${item.target_author || "N/A"}</td>
+          <td>${item.mod}</td>
+          <td>${new Date(item.created_utc * 1000).toLocaleString()}</td>
+          <td><a href="https://reddit.com${item.target_permalink}" target="_blank" rel="noopener noreferrer">Ver</a></td>
+        `;
+        tbody.appendChild(fila);
+      });
+    } else {
+      alert("Error al cargar datos: " + (data.error || resp.statusText));
+    }
+  } catch (e) {
+    alert("Error al conectar con la API: " + e.message);
+  }
+}
+
+function cambiarPagina(direccion) {
+  const totalPaginas = Math.ceil(totalResultados / porPagina);
+  const nuevaPagina = pagina + direccion;
+  if (nuevaPagina < 1 || nuevaPagina > totalPaginas) return;
+  pagina = nuevaPagina;
+  cargarDatos();
+}
+
+// Carga inicial
+cargarDatos();
+
+</script>
+</body>
+</html>
