@@ -14,11 +14,49 @@ client = MongoClient(MONGO_URI)
 db = client["reddit_logs"]
 collection = db["mod_actions"]
 
-@app.route("/api/logs", methods=["GET"])
-def get_logs():
-    # Puedes agregar filtros si quieres más adelante
-    results = list(collection.find({}, {"_id": 0}))  # No incluir _id
-    return jsonify(results)
+@app.route("/api/logs")
+def obtener_logs():
+    try:
+        # Parámetros GET de paginación
+        pagina = int(request.args.get("page", 1))
+        por_pagina = int(request.args.get("limit", 25))
+
+        # Filtros opcionales
+        autor = request.args.get("author")
+        accion = request.args.get("action")
+
+        filtro = {}
+        if autor:
+            filtro["target_author"] = {"$regex": autor, "$options": "i"}
+        if accion:
+            filtro["action"] = accion
+
+        # Conteo total (para frontend si quieres mostrar total de páginas)
+        total = collection.count_documents(filtro)
+
+        # Datos paginados
+        resultados = (
+            collection
+            .find(filtro)
+            .sort("created_utc", -1)
+            .skip((pagina - 1) * por_pagina)
+            .limit(por_pagina)
+        )
+
+        datos = list(resultados)
+
+        # Eliminar _id para evitar problemas con JSON
+        for doc in datos:
+            doc["_id"] = str(doc["_id"])
+
+        return jsonify({
+            "total": total,
+            "page": pagina,
+            "limit": por_pagina,
+            "results": datos
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
     
 @app.route("/")
 def home():
