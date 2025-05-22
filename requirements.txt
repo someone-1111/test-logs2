@@ -2,4 +2,3 @@ flask
 pymongo
 dnspython
 flask-cors
-requests
