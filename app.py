@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 from pymongo import MongoClient
 import os
 from flask_cors import CORS 
@@ -68,13 +68,19 @@ def obtener_logs():
         for doc in datos:
             doc["_id"] = str(doc["_id"])
 
-        return jsonify({
+        response = make_response(
+            jsonify({
             "total": total,
             "page": pagina,
             "limit": por_pagina,
             "results": datos,
-            "timestamp": datetime.now().isoformat()
-        })
+            "timestamp": datetime.now().isoformat()}
+            )
+        )
+        
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        return response
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
