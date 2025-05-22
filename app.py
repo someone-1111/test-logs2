@@ -19,6 +19,11 @@ def get_logs():
     # Puedes agregar filtros si quieres más adelante
     results = list(collection.find({}, {"_id": 0}))  # No incluir _id
     return jsonify(results)
+    
+@app.route("/")
+def home():
+    return "API activa"
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
