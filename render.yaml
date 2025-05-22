@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: reddit-modlog-api
+    env: python
+    buildCommand: ""
+    startCommand: "python app.py"
+    envVars:
+      - key: MONGO_URI
+        value: ""
