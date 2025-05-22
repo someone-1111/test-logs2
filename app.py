@@ -1,19 +1,24 @@
 from flask import Flask, jsonify, request
 from pymongo import MongoClient
 import os
-from flask_cors import CORS
+from flask_cors import CORS 
+from dotenv import load_dotenv
+from flask_caching import Cache
+
+load_dotenv()
 
 app = Flask(__name__)
+cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT': 30})
 CORS(app)  # Permitir peticiones desde el frontend (GitHub Pages, etc.)
 
 # URI de MongoDB (la tomarás de variable de entorno en Render)
 MONGO_URI = os.environ.get("MONGO_URI")
-
 # Conexión a MongoDB
 client = MongoClient(MONGO_URI)
 db = client["reddit_logs"]
 collection = db["mod_actions"]
 
+@cache.cached(timeout=30, query_string=True)
 @app.route("/api/logs")
 def obtener_logs():
     try:
@@ -37,10 +42,20 @@ def obtener_logs():
         # Conteo total (para frontend si quieres mostrar total de páginas)
         total = collection.count_documents(filtro)
 
+
+        campos = {
+            "_id": 0,
+            "action": 1,
+            "target_author": 1,
+            "mod": 1,
+            "created_utc": 1,
+            "target_permalink": 1
+        }
+
         # Datos paginados
         resultados = (
             collection
-            .find(filtro)
+            .find(filtro,campos)
             .sort("created_utc", -1)
             .skip((pagina - 1) * por_pagina)
             .limit(por_pagina)
