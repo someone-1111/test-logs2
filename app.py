@@ -4,6 +4,7 @@ import os
 from flask_cors import CORS 
 from dotenv import load_dotenv
 from flask_caching import Cache
+from datetime import datetime
 
 load_dotenv()
 
@@ -71,7 +72,8 @@ def obtener_logs():
             "total": total,
             "page": pagina,
             "limit": por_pagina,
-            "results": datos
+            "results": datos,
+            "timestamp": datetime.now().isoformat()
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
