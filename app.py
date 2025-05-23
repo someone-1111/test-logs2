@@ -5,6 +5,8 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from flask_caching import Cache
 from datetime import datetime
+import redis
+
 
 load_dotenv()
 
@@ -28,6 +30,16 @@ client = MongoClient(MONGO_URI)
 db = client["reddit_logs"]
 collection = db["mod_actions"]
 
+
+@app.route("/valkey-test")
+def valkey_test():
+    try:
+        r = redis.Redis.from_url(os.environ.get("REDIS_URL"))
+        r.set("test-key", "hello", ex=30)  # Guarda por 30s
+        value = r.get("test-key")
+        return jsonify({"valkey_value": value.decode("utf-8")})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @cache.cached(timeout=30)
