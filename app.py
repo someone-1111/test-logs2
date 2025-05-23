@@ -5,13 +5,14 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from flask_caching import Cache
 from datetime import datetime
+from flask_caching.backends.redis import RedisCache # type: ignore
 
 load_dotenv()
 
 app = Flask(__name__)
 CORS(app)  # Permitir peticiones desde el frontend (GitHub Pages, etc.)
 
-app.config['CACHE_TYPE'] = 'RedisCache'
+app.config['CACHE_TYPE'] = RedisCache
 app.config['CACHE_REDIS_URL'] = os.environ.get('REDIS_URL')  # Variable de entorno desde Render
 app.config['CACHE_DEFAULT_TIMEOUT'] = 30
 
