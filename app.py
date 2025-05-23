@@ -12,11 +12,12 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)  # Permitir peticiones desde el frontend (GitHub Pages, etc.)
 
-app.config['CACHE_TYPE'] = RedisCache
-app.config['CACHE_REDIS_URL'] = os.environ.get('REDIS_URL')  # Variable de entorno desde Render
-app.config['CACHE_DEFAULT_TIMEOUT'] = 30
-
-cache = Cache(app)
+cache = Cache(config={
+    'CACHE_TYPE': RedisCache,
+    'CACHE_REDIS_URL': os.environ.get("REDIS_URL"),
+    'CACHE_DEFAULT_TIMEOUT': 30
+})
+cache.init_app(app)
 
 print("Caché tipo:", app.config["CACHE_TYPE"])
 print("Redis URL:", app.config["CACHE_REDIS_URL"])
