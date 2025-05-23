@@ -13,14 +13,8 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-app.config['CACHE_TYPE'] = 'RedisCache'
-app.config['CACHE_REDIS_URL'] = os.environ.get("REDIS_URL")
-app.config['CACHE_DEFAULT_TIMEOUT'] = 30
+redis_client = redis.Redis.from_url(os.environ.get("REDIS_URL"))
 
-cache = Cache(app)
-
-print("Caché tipo:", app.config["CACHE_TYPE"])
-print("Redis URL:", app.config["CACHE_REDIS_URL"])
 
 
 # URI de MongoDB (la tomarás de variable de entorno en Render)
@@ -30,6 +24,29 @@ client = MongoClient(MONGO_URI)
 db = client["reddit_logs"]
 collection = db["mod_actions"]
 
+@app.route("/redis-test")
+def redis_test():
+    try:
+        cache_key = "test:timestamp"
+
+        # Intentar obtener el valor cacheado
+        cached = redis_client.get(cache_key)
+        if cached:
+            return jsonify({
+                "cached": True,
+                "timestamp": cached.decode("utf-8")
+            })
+
+        # Si no existe, lo crea y cachea por 30 segundos
+        timestamp = datetime.utcnow().isoformat()
+        redis_client.set(cache_key, timestamp, ex=30)
+
+        return jsonify({
+            "cached": False,
+            "timestamp": timestamp
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/valkey-test")
 def valkey_test():
@@ -42,13 +59,13 @@ def valkey_test():
         return jsonify({"error": str(e)}), 500
 
 
-@cache.cached(timeout=30)
+#@cache.cached(timeout=30)
 @app.route("/test-cache")
 def test_cache():
     print("⚡ NO HAY CACHÉ, ejecutando lógica...")
     return jsonify({"timestamp": datetime.utcnow().isoformat()})
 
-@cache.cached(timeout=30, query_string=True)
+#@cache.cached(timeout=30, query_string=True)
 @app.route("/api/logs")
 def obtener_logs():
     try:
