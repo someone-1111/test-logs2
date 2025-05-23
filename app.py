@@ -9,7 +9,14 @@ from datetime import datetime
 load_dotenv()
 
 app = Flask(__name__)
-cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache', 'CACHE_DEFAULT_TIMEOUT': 30})
+app.config['CACHE_TYPE'] = 'RedisCache'
+app.config['CACHE_REDIS_URL'] = os.environ.get("REDIS_URL")
+
+
+cache = Cache(app)
+
+
+
 CORS(app)  # Permitir peticiones desde el frontend (GitHub Pages, etc.)
 
 # URI de MongoDB (la tomarás de variable de entorno en Render)
