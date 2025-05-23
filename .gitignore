@@ -1,0 +1,18 @@
+# Ignorar entorno virtual
+venv/
+
+# Ignorar archivo de variables de entorno
+.env
+
+# Archivos de caché de Python
+__pycache__/
+*.pyc
+
+# Archivos de configuración de VSCode
+.vscode/
+
+# Archivos de logs o bases de datos temporales
+*.log
+*.sqlite3
+index.html
+render.yaml
