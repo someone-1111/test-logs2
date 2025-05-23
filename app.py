@@ -75,9 +75,9 @@ def obtener_logs():
         por_pagina = int(request.args.get("limit", 25))
 
         # Filtros opcionales
-        autor = request.args.get("author").strip()
-        accion = request.args.get("action").strip()
-        moderador = request.args.get("mod").strip()
+        autor = request.args.get("author","").strip()
+        accion = request.args.get("action","").strip()
+        moderador = request.args.get("mod","").strip()
 
 
         # Clave de caché única por combinación de filtros
@@ -138,7 +138,7 @@ def obtener_logs():
 
         return jsonify(response)
     
-    
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
