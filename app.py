@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from flask_caching import Cache
 from datetime import datetime
 import redis
+import json
 
 
 load_dotenv()
@@ -74,9 +75,19 @@ def obtener_logs():
         por_pagina = int(request.args.get("limit", 25))
 
         # Filtros opcionales
-        autor = request.args.get("author")
-        accion = request.args.get("action")
-        moderador = request.args.get("mod")
+        autor = request.args.get("author").strip()
+        accion = request.args.get("action").strip()
+        moderador = request.args.get("mod").strip()
+
+
+        # Clave de caché única por combinación de filtros
+        cache_key = f"logs:page={pagina}&limit={por_pagina}&mod={moderador or 'all'}&author={autor or 'all'}&action={accion or 'all'}"
+
+        # Intentar leer desde Redis
+        cached = redis_client.get(cache_key)
+        if cached:
+            return jsonify(json.loads(cached))
+        
 
         filtro = {}
         if autor:
@@ -114,13 +125,20 @@ def obtener_logs():
         for doc in datos:
             doc["_id"] = str(doc["_id"])
 
-        return jsonify({
+
+        response = {
             "total": total,
             "page": pagina,
             "limit": por_pagina,
             "results": datos,
             "timestamp": datetime.now().isoformat()
-        })
+        }
+
+        redis_client.set(cache_key, json.dumps(response), ex=30)
+
+        return jsonify(response)
+    
+    
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
