@@ -26,6 +26,13 @@ client = MongoClient(MONGO_URI)
 db = client["reddit_logs"]
 collection = db["mod_actions"]
 
+
+
+@cache.cached(timeout=30)
+@app.route("/test-cache")
+def test_cache():
+    return jsonify({"timestamp": datetime.utcnow().isoformat()})
+
 @cache.cached(timeout=30, query_string=True)
 @app.route("/api/logs")
 def obtener_logs():
