@@ -107,7 +107,8 @@ def obtener_logs():
             "target_author": 1,
             "mod": 1,
             "created_utc": 1,
-            "target_permalink": 1
+            "target_permalink": 1,
+            "details":1
         }
 
         # Datos paginados
