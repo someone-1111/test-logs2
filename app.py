@@ -9,15 +9,17 @@ from datetime import datetime
 load_dotenv()
 
 app = Flask(__name__)
-app.config['CACHE_TYPE'] = 'RedisCache'
-app.config['CACHE_REDIS_URL'] = os.environ.get("REDIS_URL")
+CORS(app)  # Permitir peticiones desde el frontend (GitHub Pages, etc.)
 
+app.config['CACHE_TYPE'] = 'RedisCache'
+app.config['CACHE_REDIS_URL'] = os.environ.get('REDIS_URL')  # Variable de entorno desde Render
+app.config['CACHE_DEFAULT_TIMEOUT'] = 30
 
 cache = Cache(app)
 
+print("Caché tipo:", app.config["CACHE_TYPE"])
+print("Redis URL:", app.config["CACHE_REDIS_URL"])
 
-
-CORS(app)  # Permitir peticiones desde el frontend (GitHub Pages, etc.)
 
 # URI de MongoDB (la tomarás de variable de entorno en Render)
 MONGO_URI = os.environ.get("MONGO_URI")
@@ -31,6 +33,7 @@ collection = db["mod_actions"]
 @cache.cached(timeout=30)
 @app.route("/test-cache")
 def test_cache():
+    print("⚡ NO HAY CACHÉ, ejecutando lógica...")
     return jsonify({"timestamp": datetime.utcnow().isoformat()})
 
 @cache.cached(timeout=30, query_string=True)
