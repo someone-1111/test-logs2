@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
 from pymongo import MongoClient
 import os
 from flask_cors import CORS 
@@ -65,6 +65,19 @@ def valkey_test():
 def test_cache():
     print("⚡ NO HAY CACHÉ, ejecutando lógica...")
     return jsonify({"timestamp": datetime.utcnow().isoformat()})
+
+
+@app.route('/api/tarea-secreta')
+def tarea_secreta():
+    token = request.args.get('token')
+    secret_token = os.getenv('CRON_TOKEN')  # Lee la variable de entorno
+
+    if token != secret_token:
+        abort(403)
+
+    # Aquí tu lógica para la tarea cron
+    return 'Tarea ejecutada con éxito'
+
 
 @app.route("/api/actions")
 def obtener_acciones():
