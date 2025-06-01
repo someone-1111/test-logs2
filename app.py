@@ -66,6 +66,15 @@ def test_cache():
     print("⚡ NO HAY CACHÉ, ejecutando lógica...")
     return jsonify({"timestamp": datetime.utcnow().isoformat()})
 
+@app.route("/api/actions")
+def obtener_acciones():
+    try:
+        acciones = collection.distinct("action")
+        acciones = sorted([a for a in acciones if a])  # Ordena y elimina vacíos
+        return jsonify({"actions": acciones})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 #@cache.cached(timeout=30, query_string=True)
 @app.route("/api/logs")
 def obtener_logs():
