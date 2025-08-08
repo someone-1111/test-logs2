@@ -177,7 +177,7 @@ def obtener_logs():
         return jsonify({"error": str(e)}), 500
     
 @app.route("/")
-@limiter.limit("1 per day")
+@limiter.limit("10 per day")
 def home():
     return "API activa"
 
