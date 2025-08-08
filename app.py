@@ -4,22 +4,30 @@ import os
 from flask_cors import CORS 
 from dotenv import load_dotenv
 from flask_caching import Cache
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from datetime import datetime
 import redis
 import json
 
 
 load_dotenv()
+# URI de MongoDB (la tomarás de variable de entorno en Render)
+MONGO_URI = os.environ.get("MONGO_URI")
 
 app = Flask(__name__)
+limiter = Limiter(get_remote_address,
+                  app=app,
+                  default_limits=["2 per minute", "1 per second"],
+                  storage_uri= MONGO_URI
+                  )
 CORS(app)
 
 redis_client = redis.Redis.from_url(os.environ.get("REDIS_URL"))
 
 
 
-# URI de MongoDB (la tomarás de variable de entorno en Render)
-MONGO_URI = os.environ.get("MONGO_URI")
+
 # Conexión a MongoDB
 client = MongoClient(MONGO_URI)
 db = client["reddit_logs"]
@@ -169,6 +177,7 @@ def obtener_logs():
         return jsonify({"error": str(e)}), 500
     
 @app.route("/")
+@limiter.limit("1 per day")
 def home():
     return "API activa"
 
