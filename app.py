@@ -18,7 +18,7 @@ MONGO_URI = os.environ.get("MONGO_URI")
 app = Flask(__name__)
 limiter = Limiter(get_remote_address,
                   app=app,
-                  default_limits=["2 per minute", "1 per second"],
+                  default_limits=["60 per minute", "1 per second"],
                   storage_uri= MONGO_URI
                   )
 CORS(app)
