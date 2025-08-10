@@ -131,6 +131,7 @@ def obtener_logs():
 
 
         campos = {
+            "_id":0,
             "id": 1,
             "action": 1,
             "target_author": 1,
