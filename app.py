@@ -131,7 +131,7 @@ def obtener_logs():
 
 
         campos = {
-            "_id":0,
+            "_id": 0,
             "id": 1,
             "action": 1,
             "target_author": 1,
@@ -157,7 +157,7 @@ def obtener_logs():
 
         # Eliminar _id para evitar problemas con JSON
         for doc in datos:
-            doc["_id"] = str(doc["_id"])
+            doc["_id"] = "0"
 
 
         response = {
