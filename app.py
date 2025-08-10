@@ -155,8 +155,8 @@ def obtener_logs():
         datos = list(resultados)
 
         # Eliminar _id para evitar problemas con JSON
-        #for doc in datos:
-        #    doc["_id"] = str(doc["_id"])
+        for doc in datos:
+            doc["_id"] = str(doc["_id"])
 
 
         response = {
