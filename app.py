@@ -25,9 +25,6 @@ CORS(app)
 
 redis_client = redis.Redis.from_url(os.environ.get("REDIS_URL"))
 
-
-
-
 # Conexión a MongoDB
 client = MongoClient(MONGO_URI)
 db = client["reddit_logs"]
@@ -116,6 +113,7 @@ def obtener_logs():
         # Intentar leer desde Redis
         cached = redis_client.get(cache_key)
         if cached:
+            cached["cached"]= True
             return jsonify(json.loads(cached))
         
 
@@ -165,7 +163,8 @@ def obtener_logs():
             "page": pagina,
             "limit": por_pagina,
             "results": datos,
-            "timestamp": datetime.now().isoformat()
+            "timestamp": datetime.now().isoformat(),
+            "cached": False
         }
 
         redis_client.set(cache_key, json.dumps(response), ex=30)
