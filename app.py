@@ -113,8 +113,9 @@ def obtener_logs():
         # Intentar leer desde Redis
         cached = redis_client.get(cache_key)
         if cached:
-            cached["cached"]= True
-            return jsonify(json.loads(cached))
+            data= json.loads(cached)
+            data["cached"]= True
+            return jsonify(data)
         
 
         filtro = {}
