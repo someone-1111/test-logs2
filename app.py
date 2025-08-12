@@ -191,6 +191,10 @@ def obtener_logs():
 def home():
     return "API activa"
 
+@app.errorhandler(429)
+def ratelimit_handler(e):
+    return jsonify(error="Demasiadas peticiones, espera unos segundos."), 429
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
