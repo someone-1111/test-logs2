@@ -9,6 +9,7 @@ from flask_limiter.util import get_remote_address
 from datetime import datetime
 import redis
 import json
+import re
 
 
 load_dotenv()
@@ -99,13 +100,21 @@ def obtener_logs():
     try:
         # Parámetros GET de paginación
         pagina = int(request.args.get("page", 1))
-        por_pagina = int(request.args.get("limit", 25))
+        por_pagina = 25
 
         # Filtros opcionales
         autor = request.args.get("author","").strip()
         accion = request.args.get("action","").strip()
         moderador = request.args.get("mod","").strip()
 
+        # Validación básica: solo letras, números, guion bajo y medio, máximo 32 caracteres
+        def es_texto_simple(valor):
+            return bool(re.match(r'^[\w\-]{1,32}$', valor))
+
+        if autor and not es_texto_simple(autor):
+            return jsonify({"error": "Formato de usuario inválido"}), 400
+        if moderador and not es_texto_simple(moderador):
+            return jsonify({"error": "Formato de moderador inválido"}), 400
 
         # Clave de caché única por combinación de filtros
         cache_key = f"logs:page={pagina}&limit={por_pagina}&mod={moderador or 'all'}&author={autor or 'all'}&action={accion or 'all'}"
@@ -120,9 +129,9 @@ def obtener_logs():
 
         filtro = {}
         if autor:
-            filtro["target_author"] = {"$regex": autor, "$options": "i"}
+            filtro["target_author"] = {"$regex": re.escape(autor), "$options": "i"}
         if moderador:
-            filtro["mod"] = {"$regex": moderador, "$options": "i"}
+            filtro["mod"] = {"$regex": re.escape(moderador), "$options": "i"}
         if accion:
             filtro["action"] = accion
 
