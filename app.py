@@ -178,7 +178,7 @@ def obtener_logs():
 @app.route("/checking")
 @limiter.limit("300 per day")
 def home2():
-    return "API activa"
+    return jsonify({"test": "200"}), 200
 
 @app.route("/")
 def home():
