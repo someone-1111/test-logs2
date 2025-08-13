@@ -19,7 +19,7 @@ MONGO_URI = os.environ.get("MONGO_URI")
 app = Flask(__name__)
 limiter = Limiter(get_remote_address,
                   app=app,
-                  default_limits=["60 per minute", "1 per second"],
+                  default_limits=["60 per minute", "5 per second"],
                   storage_uri= MONGO_URI
                   )
 CORS(app)
@@ -175,8 +175,12 @@ def obtener_logs():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
+@app.route("/checking")
+@limiter.limit("300 per day")
+def home():
+    return "API activa"
+
 @app.route("/")
-@limiter.limit("10 per day")
 def home():
     return "API activa"
 
