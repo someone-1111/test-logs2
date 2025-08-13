@@ -55,17 +55,6 @@ def redis_test():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route("/valkey-test")
-def valkey_test():
-    try:
-        r = redis.Redis.from_url(os.environ.get("REDIS_URL"))
-        r.set("test-key", "hello", ex=30)  # Guarda por 30s
-        value = r.get("test-key")
-        return jsonify({"valkey_value": value.decode("utf-8")})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
 #@cache.cached(timeout=30)
 @app.route("/test-cache")
 def test_cache():
@@ -191,9 +180,23 @@ def obtener_logs():
 def home():
     return "API activa"
 
+@app.route("/api/clear-cache", methods=["POST"])
+def clear_cache():
+    token = request.args.get("token")
+    secret_token = os.getenv('CRON_RESET_CACHE')
+    if token != secret_token:
+        abort(403)
+    # Borra todas las claves de logs en Redis
+    for key in redis_client.scan_iter("logs:*"):
+        redis_client.delete(key)
+    return jsonify({"ok": True, "msg": "Caché limpiada"})
+
+
 @app.errorhandler(429)
 def ratelimit_handler(e):
     return jsonify(error="Demasiadas peticiones, espera unos segundos."), 429
+
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
