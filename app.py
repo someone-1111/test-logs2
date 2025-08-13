@@ -44,9 +44,9 @@ def redis_test():
                 "timestamp": cached.decode("utf-8")
             })
 
-        # Si no existe, lo crea y cachea por 30 segundos
+        # Si no existe, lo crea y cachea por 300 segundos
         timestamp = datetime.utcnow().isoformat()
-        redis_client.set(cache_key, timestamp, ex=30)
+        redis_client.set(cache_key, timestamp, ex=300)
 
         return jsonify({
             "cached": False,
@@ -167,7 +167,7 @@ def obtener_logs():
             "cached": False
         }
 
-        redis_client.set(cache_key, json.dumps(response), ex=30)
+        redis_client.set(cache_key, json.dumps(response), ex=300)
 
         return jsonify(response)
     
