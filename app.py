@@ -177,7 +177,7 @@ def obtener_logs():
     
 @app.route("/checking")
 @limiter.limit("300 per day")
-def home():
+def home2():
     return "API activa"
 
 @app.route("/")
