@@ -309,7 +309,6 @@ def obtener_logs():
         return jsonify({"error": str(e)}), 500
 
 @app.route("/checking")
-@limiter.limit("300 per day")
 def home2():
     return jsonify({"test": "200"}), 200
 
