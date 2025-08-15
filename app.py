@@ -419,6 +419,8 @@ def iniciar_scheduler():
     scheduler_thread = threading.Thread(target=scheduler, daemon=True)
     scheduler_thread.start()
     threading.Thread(target=monitor_scheduler, daemon=True).start()
+    
+iniciar_scheduler()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
