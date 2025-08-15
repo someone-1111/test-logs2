@@ -53,62 +53,7 @@ logging.basicConfig(
     level=logging.INFO
 )
 
-def limpiar_cache_backend():
-    url = f"{BACKEND_URL}/api/clear-cache?token={SECRET_TOKEN}"
-    logging.info("Iniciando limpieza de caché en backend...")
 
-    try:
-        resp = requests.post(url, timeout=10)
-        if resp.ok:
-            logging.info("✅ Caché del backend limpiada correctamente.")
-        else:
-            logging.error(f"❌ Error al limpiar caché: HTTP {resp.status_code} - {resp.text}")
-    except requests.RequestException as e:
-        logging.error(f"❌ Error de conexión al limpiar caché: {e}")
-
-
-
-def wake_up_backend(max_retries=5, wait_seconds=5):
-    url = f"{BACKEND_URL}/"
-    logging.info(f"Despertando backend en {url}...")
-
-    for intento in range(1, max_retries + 1):
-        try:
-            resp = requests.get(url, timeout=10)
-            if resp.ok:
-                logging.info(f"Backend activo (HTTP {resp.status_code}) en intento {intento}.")
-                return True
-            else:
-                logging.warning(f"Intento {intento}: Respuesta no OK ({resp.status_code}).")
-        except requests.RequestException as e:
-            logging.warning(f"Intento {intento}: Error al contactar backend: {e}")
-        logging.info(f"Esperando {wait_seconds} segundos antes de reintentar...")
-        sleep(wait_seconds)
-
-    logging.error("No se pudo activar el backend después de varios intentos.")
-    return False
-
-def ejecutar_scraper():
-    logging.info(f"=== EJECUCIÓN PROGRAMADA | {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')} ===")
-    run()
-    if wake_up_backend():
-        limpiar_cache_backend()
-    logging.info("=== FIN DE EJECUCIÓN ===")
-
-def scheduler():
-    while True:
-        ejecutar_scraper()
-        sleep(INTERVALO_MINUTOS * 60)
-
-# ================== ARRANQUE DEL SCHEDULER ==================
-scheduler_started = False
-def iniciar_scheduler():
-    global scheduler_started
-    if not scheduler_started:
-        scheduler_started = True
-        hilo = threading.Thread(target=scheduler, daemon=True)
-        hilo.start()
-iniciar_scheduler()
 
 
 @app.route("/api/run-scraper", methods=["POST"])
@@ -202,12 +147,6 @@ def scraper():
         print(f"Total insertados en esta ejecución: {total_inserted}")
         logging.info(f"Total insertados en esta ejecución: {total_inserted}")
 
-def run():
-    logging.info("Iniciando scraper...")
-    # Aquí iría tu lógica real de scrap y actualización de MongoDB
-    scraper()
-    sleep(1)  # Simulación
-    logging.info("Scraper finalizado: Base de datos actualizada correctamente.")
 
 
 
@@ -357,6 +296,73 @@ def clear_cache():
 @app.errorhandler(429)
 def ratelimit_handler(e):
     return jsonify(error="Demasiadas peticiones, espera unos segundos."), 429
+
+
+def run():
+    logging.info("Iniciando scraper...")
+    # Aquí iría tu lógica real de scrap y actualización de MongoDB
+    scraper()
+    sleep(1)  # Simulación
+    logging.info("Scraper finalizado: Base de datos actualizada correctamente.")
+
+
+
+def limpiar_cache_backend():
+    url = f"{BACKEND_URL}/api/clear-cache?token={SECRET_TOKEN}"
+    logging.info("Iniciando limpieza de caché en backend...")
+
+    try:
+        resp = requests.post(url, timeout=10)
+        if resp.ok:
+            logging.info("✅ Caché del backend limpiada correctamente.")
+        else:
+            logging.error(f"❌ Error al limpiar caché: HTTP {resp.status_code} - {resp.text}")
+    except requests.RequestException as e:
+        logging.error(f"❌ Error de conexión al limpiar caché: {e}")
+
+
+
+def wake_up_backend(max_retries=5, wait_seconds=5):
+    url = f"{BACKEND_URL}/"
+    logging.info(f"Despertando backend en {url}...")
+
+    for intento in range(1, max_retries + 1):
+        try:
+            resp = requests.get(url, timeout=10)
+            if resp.ok:
+                logging.info(f"Backend activo (HTTP {resp.status_code}) en intento {intento}.")
+                return True
+            else:
+                logging.warning(f"Intento {intento}: Respuesta no OK ({resp.status_code}).")
+        except requests.RequestException as e:
+            logging.warning(f"Intento {intento}: Error al contactar backend: {e}")
+        logging.info(f"Esperando {wait_seconds} segundos antes de reintentar...")
+        sleep(wait_seconds)
+
+    logging.error("No se pudo activar el backend después de varios intentos.")
+    return False
+
+def ejecutar_scraper():
+    logging.info(f"=== EJECUCIÓN PROGRAMADA | {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')} ===")
+    run()
+    if wake_up_backend():
+        limpiar_cache_backend()
+    logging.info("=== FIN DE EJECUCIÓN ===")
+
+def scheduler():
+    while True:
+        ejecutar_scraper()
+        sleep(INTERVALO_MINUTOS * 60)
+
+# ================== ARRANQUE DEL SCHEDULER ==================
+scheduler_started = False
+def iniciar_scheduler():
+    global scheduler_started
+    if not scheduler_started:
+        scheduler_started = True
+        hilo = threading.Thread(target=scheduler, daemon=True)
+        hilo.start()
+iniciar_scheduler()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
