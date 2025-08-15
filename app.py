@@ -91,12 +91,43 @@ def save_to_mongodb(collection, items):
 
 
 def fetch_reddit_data(after=None):
+    # Credenciales
+    client_id = os.environ.get("CLIENT_ID")
+    client_secret = os.environ.get("CLIENT_SECRET")
+    username = os.environ.get("USERNAME")
+    password = os.environ.get("PASSWORD")
+
+    # User-Agent obligatorio por Reddit
+    user_agent = "script:myScriptv5:modlog (by /u/nombreimaginativo)"
+
+    # Obtener el access token
+    auth = requests.auth.HTTPBasicAuth(client_id, client_secret)
+    data = {
+        "grant_type": "password",
+        "username": username,
+        "password": password
+    }
+    headers2 = {"User-Agent": user_agent}
+
+    res = requests.post("https://www.reddit.com/api/v1/access_token",
+                        auth=auth, data=data, headers=headers2)
+    res.raise_for_status()
+    token = res.json()["access_token"]
+    print("Access token:", token)
+
+    # Usar el token para obtener los logs de moderación
+    headers2["Authorization"] = f"bearer {token}"
+    
+        
+    
+    
+    
     url = REDDIT_URL
     if after:
         url += f"&after={after}"
     print(f"Consultando: {url}")
     try:
-        response = requests.get(url, headers=HEADERS, timeout=15)
+        response = requests.get(url, headers=headers2, timeout=15)
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
