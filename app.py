@@ -398,12 +398,12 @@ def scheduler():
             ahora = datetime.now()
             proxima = calcular_siguiente_ejecucion()
             espera = (proxima - ahora).total_seconds()
-            logging.info(f"⏳ Próxima ejecución programada para: {proxima.strftime('%Y-%m-%d %H:%M:%S')}")
+            logging.info(f"[SCHEDULER] Hora actual: {ahora.strftime('%H:%M:%S')} | Próxima ejecución: {proxima.strftime('%H:%M:%S')}")
             sleep(espera)  # Esperar hasta el momento exacto
+            logging.info("[SCHEDULER] Ejecutando scraper...")
             ejecutar_scraper()
         except Exception as e:
             logging.error(f"Error en scheduler: {e}")
-            # Continúa hacia la próxima ejecución sin interrumpir el ciclo
 
 def monitor_scheduler():
     global scheduler_thread
