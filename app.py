@@ -28,9 +28,9 @@ MONGO_URI = os.environ.get("MONGO_URI")
 DB_NAME = "reddit_logs"
 COLLECTION_NAME = "mod_actions"
 REDDIT_URL = (
-    "https://www.reddit.com/r/mod/about/log/.json?feed=38a1201d33c43f6b758c42b899a33bdd93f4836f&user=rchilemodlog&limit=100"
+    "https://www.reddit.com/r/mod/about/log/.json?feed=38a1201d33c43f6b758c42b899a33bdd93f4836f&user=rchilemodlog&limit=100&raw_json=1"
 )
-HEADERS = {"User-Agent": "RedditModLogScraper/1.0"}
+HEADERS = {"User-Agent": "RedditModLogScraper/1.0 by u/sapomodlogbot"}
 
 app = Flask(__name__)
 limiter = Limiter(get_remote_address,
