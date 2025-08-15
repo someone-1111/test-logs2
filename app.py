@@ -24,7 +24,7 @@ INTERVALO_MINUTOS = int(os.environ.get("SCRAPER_INTERVAL", 10))  # por defecto c
 
 # ================== CONFIGURACIÓN FLASK ==================
 # MONGO_URI = os.environ.get("MONGO_URI")
-MONGO_URI = os.environ.get("MONGO_URI", "mongodb+srv://t15077134:O45Z0gFP0gk7iFdy@cluster0.rkow0cr.mongodb.net/")
+MONGO_URI = os.environ.get("MONGO_URI")
 DB_NAME = "reddit_logs"
 COLLECTION_NAME = "mod_actions"
 REDDIT_URL = (
