@@ -53,6 +53,16 @@ logging.basicConfig(
     level=logging.INFO
 )
 
+# ================== ARRANQUE DEL SCHEDULER ==================
+scheduler_started = False
+def iniciar_scheduler():
+    global scheduler_started
+    if not scheduler_started:
+        scheduler_started = True
+        hilo = threading.Thread(target=scheduler, daemon=True)
+        hilo.start()
+iniciar_scheduler()
+
 
 @app.route("/api/run-scraper", methods=["POST"])
 @limiter.limit("3 per minute")  # evita spam incluso con token
@@ -199,12 +209,12 @@ def scheduler():
 
 
 
-# Lanzar scheduler en segundo plano al iniciar Flask
+""" # Lanzar scheduler en segundo plano al iniciar Flask
 @app.before_first_request
 def iniciar_scheduler():
     hilo = threading.Thread(target=scheduler)
     hilo.daemon = True
-    hilo.start()
+    hilo.start() """
 
 # ----------------- RUTAS EXISTENTES -----------------
 @app.route("/redis-test")
