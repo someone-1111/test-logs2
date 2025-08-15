@@ -5,7 +5,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import redis
 import json
 import re
@@ -31,6 +31,9 @@ REDDIT_URL = (
     "https://www.reddit.com/r/mod/about/log/.json?feed=38a1201d33c43f6b758c42b899a33bdd93f4836f&user=rchilemodlog&limit=100&raw_json=1"
 )
 HEADERS = {"User-Agent": "RedditModLogScraper/1.0 by u/sapomodlogbot"}
+INTERVALO_MINUTOS = 10
+scheduler_thread = None
+
 
 app = Flask(__name__)
 limiter = Limiter(get_remote_address,
@@ -353,7 +356,7 @@ def limpiar_cache_backend():
 
 
 
-def wake_up_backend(max_retries=5, wait_seconds=5):
+def wake_up_backend(max_retries=5, wait_seconds=60):
     url = f"{BACKEND_URL}/"
     logging.info(f"Despertando backend en {url}...")
 
@@ -380,20 +383,43 @@ def ejecutar_scraper():
         limpiar_cache_backend()
     logging.info("=== FIN DE EJECUCIÓN ===")
 
+
+
+def calcular_siguiente_ejecucion():
+    ahora = datetime.now()
+    # Redondear al siguiente múltiplo de INTERVALO_MINUTOS
+    minutos_a_sumar = INTERVALO_MINUTOS - (ahora.minute % INTERVALO_MINUTOS)
+    siguiente = ahora.replace(second=0, microsecond=0) + timedelta(minutes=minutos_a_sumar)
+    return siguiente
+
 def scheduler():
     while True:
-        ejecutar_scraper()
-        sleep(INTERVALO_MINUTOS * 60)
+        try:
+            ahora = datetime.now()
+            proxima = calcular_siguiente_ejecucion()
+            espera = (proxima - ahora).total_seconds()
+            logging.info(f"⏳ Próxima ejecución programada para: {proxima.strftime('%Y-%m-%d %H:%M:%S')}")
+            sleep(espera)  # Esperar hasta el momento exacto
+            ejecutar_scraper()
+        except Exception as e:
+            logging.error(f"Error en scheduler: {e}")
+            # Continúa hacia la próxima ejecución sin interrumpir el ciclo
 
-# ================== ARRANQUE DEL SCHEDULER ==================
-scheduler_started = False
+def monitor_scheduler():
+    global scheduler_thread
+    while True:
+        if scheduler_thread is None or not scheduler_thread.is_alive():
+            logging.warning("⚠ Scheduler muerto, reiniciando...")
+            scheduler_thread = threading.Thread(target=scheduler, daemon=True)
+            scheduler_thread.start()
+        sleep(60)  # Revisar cada minuto
+
 def iniciar_scheduler():
-    global scheduler_started
-    if not scheduler_started:
-        scheduler_started = True
-        hilo = threading.Thread(target=scheduler, daemon=True)
-        hilo.start()
-iniciar_scheduler()
+    global scheduler_thread
+    logging.info("🚀 Iniciando scheduler y monitor...")
+    scheduler_thread = threading.Thread(target=scheduler, daemon=True)
+    scheduler_thread.start()
+    threading.Thread(target=monitor_scheduler, daemon=True).start()
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 10000))
