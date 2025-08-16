@@ -246,6 +246,7 @@ def obtener_logs():
         autor = request.args.get("author","").strip()
         accion = request.args.get("action","").strip()
         moderador = request.args.get("mod","").strip()
+        ignorar_mods = request.args.get("ignore_mods", "false").lower() == "true"
 
         def es_texto_simple(valor):
             return bool(re.match(r'^[\w\-]{1,32}$', valor))
@@ -255,7 +256,7 @@ def obtener_logs():
         if moderador and not es_texto_simple(moderador):
             return jsonify({"error": "Formato de moderador inválido"}), 400
 
-        cache_key = f"logs:page={pagina}&limit={por_pagina}&mod={moderador or 'all'}&author={autor or 'all'}&action={accion or 'all'}"
+        cache_key = f"logs:page={pagina}&limit={por_pagina}&mod={moderador or 'all'}&author={autor or 'all'}&action={accion or 'all'}&ignore={ignorar_mods}"
         cached = redis_client.get(cache_key)
         if cached:
             data= json.loads(cached)
@@ -263,10 +264,25 @@ def obtener_logs():
             return jsonify(data)
 
         filtro = {}
+        excluidos = ["AutoModerator", "floodassistant", "empleadoEstatalBot"]
+        
         if autor:
             filtro["target_author"] = {"$regex": re.escape(autor), "$options": "i"}
         if moderador:
-            filtro["mod"] = {"$regex": re.escape(moderador), "$options": "i"}
+            # Si hay moderador y queremos ignorar algunos
+            if ignorar_mods:
+                filtro["$and"] = [
+                    {"mod": {"$regex": re.escape(moderador), "$options": "i"}},
+                    {"mod": {"$nin": excluidos}}
+                ]
+            else:
+                filtro["mod"] = {"$regex": re.escape(moderador), "$options": "i"}
+        else:
+            # Si no se filtra por moderador pero hay que ignorar algunos
+            if ignorar_mods:
+                filtro["mod"] = {"$nin": excluidos}
+
+
         if accion:
             filtro["action"] = accion
 
